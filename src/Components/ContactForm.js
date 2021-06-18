@@ -6,9 +6,9 @@ import { connect } from 'react-redux';
 import { addContact } from '../redux/actions';
 
 class Form extends Component {
-  // static propTypes = {
-  //   addContact: PropTypes.func.isRequired,
-  // };
+  static propTypes = {
+    addContact: PropTypes.func,
+  };
 
   state = {
     name: '',
@@ -108,8 +108,6 @@ const mapDispatchToProps = dispatch => {
   };
 };
 
-const mapStateToProps = state => {
-  return {};
-};
+const mapStateToProps = () => ({});
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form);

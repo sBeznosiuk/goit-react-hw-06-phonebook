@@ -1,52 +1,91 @@
-import { createStore, combineReducers } from 'redux';
-import { composeWithDevTools } from 'redux-devtools-extension';
+import {
+  combineReducers,
+  configureStore,
+  createReducer,
+  getDefaultMiddleware,
+} from '@reduxjs/toolkit';
+import logger from 'redux-logger';
+import {
+  persistStore,
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
+import { addContact, removeContact, filterContacts } from './actions';
 
-const contactsReducer = (
-  state = {
-    items: JSON.parse(localStorage.getItem('Contacts')) || [],
+const persistConfig = {
+  key: 'Contacts',
+  storage,
+};
+
+const contactsReducer = createReducer(
+  {
+    items: [],
     filter: '',
   },
-  { type, payload },
-) => {
-  switch (type) {
-    case 'contact/Add':
-      const doesExists = state.items.some(item => item.name === payload.name);
+  {
+    [addContact]: (state, { payload }) => doesExist(state, payload),
+    [removeContact]: (state, { payload }) => ({
+      items: [...state.items.filter(i => i.id !== payload)],
+    }),
 
-      if (doesExists) {
-        alert(`${payload.name} is already in contacts.`);
+    [filterContacts]: (state, { payload }) => ({
+      ...state,
+      filter: payload,
+    }),
+  },
+);
 
-        return {
-          ...state,
-        };
-      } else {
-        return {
-          ...state,
-          items: [...state.items, payload],
-        };
-      }
+// const itemsReducer = createReducer([], {
+//   [addContact]: (state, { payload }) => doesExist(state, payload),
+//   [removeContact]: (state, { payload }) => [
+//     ...state.filter(i => i.id !== payload),
+//   ],
+// });
 
-    case 'contact/Remove':
-      console.log(payload);
+// const filterReducer = createReducer('', {
+//   [filterContacts]: (_, { payload }) => payload,
+// });
 
-      return {
-        items: [...state.items.filter(i => i.id !== payload)],
-      };
+function doesExist(state, payload) {
+  const doesExist = state.items.some(item => item.name === payload.name);
 
-    case 'contact/Filter':
-      return {
-        ...state,
-        filter: payload,
-      };
-
-    default:
-      return state;
+  if (doesExist) {
+    alert(`${payload.name} is already in contacts.`);
+  } else {
+    return {
+      ...state,
+      items: [...state.items, payload],
+    };
   }
-};
+}
 
 const rootReducer = combineReducers({
   contacts: contactsReducer,
 });
 
-const store = createStore(rootReducer, composeWithDevTools());
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-export default store;
+const middleware = [
+  ...getDefaultMiddleware({
+    serializableCheck: {
+      ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+    },
+  }),
+  logger,
+];
+
+const store = configureStore({
+  reducer: persistedReducer,
+  devTools: process.env.NODE_ENV === 'development',
+  middleware,
+});
+
+const persistor = persistStore(store);
+
+export { store, persistor };

@@ -38,7 +38,7 @@ const ContactList = ({ contacts, filter, onRemoveContact }) => {
 
 ContactList.propTypes = {
   filter: PropTypes.string,
-  // onClickRemove: PropTypes.func.isRequired,
+  onClickRemove: PropTypes.func,
 };
 
 const mapStateToProps = state => ({
